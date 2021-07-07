@@ -4,15 +4,52 @@
 #include <strings.h>
 #include <assert.h>
 #include <unistd.h>
+#include <dlfcn.h>
 
 #include "int.h"
 
 int isnumber(Data* node){
-    return node->type==number;
+    return node->type==NUMBER;
 }
 
-Data* numberp(Data* node,Data* var_list __attribute__((unused))){
-    return node->elt->type==number ? T:nil;    
+Data* numberp(Data* node,Data* var_list){
+    return node->elt->type==NUMBER ? T:nil;    
+}
+
+Data* type_of(Data* data,Data* env){
+    char* str = NULL;
+
+    switch(data->elt->type){
+        case STRING:
+            str = "STRING";
+            break;
+        case NUMBER:
+            str = "NUMBER";
+            break;
+        case BLOB:
+            str = "BLOB";
+            break;
+        case SYMBOL:
+            str = "SYMBOL";
+            break;
+        case ARRAY:
+            str = "ARRAY";
+            break;
+        case NODE:
+            str = "NODE";
+            break;
+        case VAR:
+            str = "VAR";
+            break;
+        case MACRO:
+            str = "MACRO";
+            break;
+        case PRIMITIVE:
+            str = "PRIMITIVE";
+            break;
+    }
+
+    return make_string(str);
 }
 
 Data* setf(Data* arg,Data* env){
@@ -24,12 +61,12 @@ Data* setf(Data* arg,Data* env){
 
     Data* var = arg->elt;
 
-    if(var->type==number || var->type==string) throw_error(ERR_TYPE,"lvalue not setfable");
+    if(var->type==NUMBER || var->type==STRING) throw_error(ERR_TYPE,"lvalue not setfable");
 
-    if(var->type!=symbol) var = eval(var,env);
+    if(var->type!=SYMBOL) var = eval(var,env);
 
     Data* e = eval(arg->next->elt,env);
-    if(var->type==symbol){
+    if(var->type==SYMBOL){
         Data* s = search_symbol(env,arg->elt->symbol);
         if(s) memcpy(s,e,sizeof(Data));
         else insert_node(&env,make_variable(arg->elt->symbol,e));
@@ -137,7 +174,7 @@ Data* minus(Data* args,Data* var_list __attribute__((unused))){
     int eax=args->elt->value;
 
     for(args=args->next;args && args!=nil;args=args->next){
-        assert(args->elt->type==number);
+        assert(args->elt->type==NUMBER);
         eax-=args->elt->value;
     }
     return make_number(eax);
@@ -150,7 +187,7 @@ Data* sum(Data* args,Data* var_list){
 
     for(;args!=nil;args=args->next){
         if(isnumber(args->elt)) holder=args->elt->value;
-        else if((e=handle_symbol(var_list,args->elt))->type==number) holder= e->value;
+        else if((e=handle_symbol(var_list,args->elt))->type==NUMBER) holder= e->value;
         else continue;
         eax+=holder;
     }
@@ -163,7 +200,7 @@ Data* eq(Data* args,Data* env){
 }
 
 Data* lower(Data* args,Data* env __attribute__ ((unused))){
-    if(!(args->elt->type == number && number == args->next->elt->type)) throw_error(ERR_TYPE,"both arguments have to be numbers");
+    if(!(args->elt->type == NUMBER && NUMBER == args->next->elt->type)) throw_error(ERR_TYPE,"both arguments have to be numbers");
     
     return args->elt->value < args->next->elt->value ? T : nil;
 }
@@ -176,9 +213,9 @@ Data* aref(Data* args,Data* env __attribute__ ((unused))){
     Data* i = args->elt,*arr=args->next->elt;
 
     assure(list_length(args)==2,ERR_LEN_MISMATCH);
-    assert(i->type==number);
-    assure(i->type==number,ERR_TYPE);
-    assure(arr->type==array,ERR_TYPE);
+    assert(i->type==NUMBER);
+    assure(i->type==NUMBER,ERR_TYPE);
+    assure(arr->type==ARRAY,ERR_TYPE);
 
     unsigned int a = (unsigned) i->value;
     if(a>=arr->size){
@@ -189,7 +226,7 @@ Data* aref(Data* args,Data* env __attribute__ ((unused))){
 }
 
 Data* array_dimensions(Data* args,Data* env __attribute__ ((unused))){
-    assure(args->type==array,ERR_TYPE);
+    assure(args->type==ARRAY,ERR_TYPE);
     assure(list_length(args)==1,ERR_LEN_MISMATCH);
     return make_number(args->elt->size);
 }
@@ -230,7 +267,7 @@ Data* and(Data* args,Data* env){
 
 
 Data* length_(Data* args,Data* var_list __attribute__ ((unused))){
-    assure(args->elt->type==node,ERR_TYPE);
+    assure(args->elt->type==NODE,ERR_TYPE);
     return make_number(list_length(args->elt));
 }
 
@@ -260,7 +297,7 @@ Data* loop(Data* args,Data* env){
 }
 
 Data* sleep_(Data* args,Data* env __attribute__((unused))){
-    assure(args->elt->type==number,ERR_TYPE);
+    assure(args->elt->type==NUMBER,ERR_TYPE);
     assure(list_length(args)==2,ERR_LEN_MISMATCH);
     sleep(args->elt->value);
 
@@ -272,13 +309,61 @@ Data* load(Data* args,Data* env){
     char a[20];
 
     while(args && args!= nil){
-        assure(args->elt->type==symbol,ERR_TYPE);
+        assure(args->elt->type==SYMBOL,ERR_TYPE);
         strcpy(a,args->elt->symbol);
         load_file(a,env);
         args=args->next;
     }
 
     return make_symbol(a);
+}
+
+
+Data* dll_open(Data* args,Data* env){
+    //return type_of(args->elt,env);
+    assure(args && args!=nil,ERR_NOT_FOUND);
+
+    assure( args->elt->type == STRING,ERR_TYPE);
+
+    char* handle_name = args->elt->str;
+
+    void* handle = dlopen(handle_name,RTLD_LAZY);
+
+    assert(handle);
+
+
+    return handle ? make_blob(handle) : nil;
+}
+
+Data* dll_load(Data* args,Data* env){
+    assure(args && args!=nil,ERR_NOT_FOUND);
+    assure( args->elt->type == BLOB,ERR_TYPE);
+    assure( args->next->elt->type == STRING,ERR_TYPE);
+
+    void* handle = args->elt->blob;
+    args = args->next;
+    char* foo_name = args->elt->str;
+
+    void* foo = dlsym(handle,foo_name);
+    exit(0);
+
+
+    return foo ?  make_blob(foo) : nil;
+}
+
+Data* dll_apply(Data* args,Data* env){
+    Primitive foo = args->elt->blob;
+
+    args = args->next;
+
+    return foo(args,env);
+}
+
+Data* dll_close(Data* args,Data* env){
+    assure(args && args!=nil,ERR_NOT_FOUND);
+    assure( args->elt->type == BLOB,ERR_TYPE);
+
+    return dlclose(args->elt->blob) == 0 ? T : nil;
 }
 
 Data* load_symbols(){
@@ -291,7 +376,7 @@ Data* load_symbols(){
     insert_node(&list,make_variable("-",make_primitive(minus)));
     insert_node(&list,make_variable("*",make_primitive(mult)));
     insert_node(&list,make_variable("/",make_primitive(division)));
-    insert_node(&list,make_variable("%",make_primitive(resto)));
+    insert_node(&list,make_variable("%%",make_primitive(resto)));
     insert_node(&list,make_variable("eq",make_primitive(eq)));
     insert_node(&list,make_variable("<",make_primitive(lower)));
     insert_node(&list,make_variable(">",make_primitive(higher)));
@@ -321,6 +406,13 @@ Data* load_symbols(){
     insert_node(&list,make_variable("or",make_macro(and)));
     insert_node(&list,make_variable("loop",make_macro(loop)));
     insert_node(&list,make_variable("list",make_macro(eval_args)));
+
+    MAKE_VARIABLE("type",make_primitive(type_of));
+
+    MAKE_VARIABLE("dll-open",make_primitive(dll_open));
+    MAKE_VARIABLE("dll-load",make_primitive(dll_load));
+    MAKE_VARIABLE("dll-apply",make_primitive(dll_apply));
+    MAKE_VARIABLE("dll-close",make_primitive(dll_close));
 
     return list;
 }

@@ -7,23 +7,22 @@
 //#define UNUSED(x) (void)(x)
 //#define LAMBDA(ret,body) ({ret _ body _;})
 
-#define STRING_MAX 20
-
 typedef struct _data Data;
 
 typedef Data* (*Primitive)(Data*,Data*);
 typedef Data* (*Macro)(Data*,Data*);
 
 typedef enum{
-    number=1,
-    node=2,
-    string=4,
-    symbol=8,
-    var=16,
-    primitive=32,
-    lambda=64,
-    macro=128,
-    array=256
+    NUMBER,
+    NODE,
+    STRING,
+    SYMBOL,
+    VAR,
+    PRIMITIVE,
+    LAMBDA,
+    MACRO,
+    ARRAY,
+    BLOB
 }Type;
 
 typedef enum{
@@ -46,34 +45,43 @@ typedef struct{
 extern err_t ERROR_OPCODES[];
 extern unsigned long ERR_T_SIZE;
 
+
 #define assure(b,e) if(!(b)) throw_error(e,"at %s %s line %d\n",__FILE__,__FUNCTION__,__LINE__)
 
+#define MAKE_VARIABLE(str,fn) insert_node(&list,make_variable(str,fn))
+
+
 struct _data{
-	Type type;
-	union{
-		struct{
-			struct _data* elt;
-			struct _data* next;
-		};
-		int value;
-		char str[STRING_MAX];
-		char symbol[STRING_MAX];
+    Type type;
+    union{
+        struct{
+            struct _data* elt;
+            struct _data* next;
+        };
+
+        int value;
+        char* str;
+        char* symbol;
+
+        void* blob;
+
         struct{
             Data** array;
             unsigned int size;
         };
-		Primitive fn;
+
+        Primitive fn;
         Macro mac;
-		struct{
-			char name[STRING_MAX];
-			Data* data;
-		};
-	};
+
+        struct{
+            char* name;
+            Data* data;
+        };
+    };
 };
 
 extern Data* T;
 extern Data* nil;
-extern Data* clean_list;
 extern Data* Abort;
 
 //lisp.c
@@ -82,6 +90,7 @@ Data* load_list(char*);
 void delete_list(Data**);
 Data* insert_node(Data**,Data*);
 Data* make_number(int);
+Data* make_blob(void* stuff);
 Data* make_symbol(char*);
 Data* make_primitive(Primitive);
 Data* make_macro(Macro);
@@ -95,7 +104,7 @@ Data* car(Data*);
 int list_length(Data*);
 Data* copy(Data*,Data*);
 Data* compare(Data*,Data*,Data*);
-__attribute__((destructor)) void collect();
+//void* lisp_data_to_param(Data* data);
 Data* wrap(Data* l);
 
 //parser.c

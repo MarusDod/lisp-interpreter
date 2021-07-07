@@ -1,24 +1,24 @@
 CC=gcc
-cflags=-Wall -g -I
+cflags=-Wall -g -I 
+LIBS=-ldl -lreadline -export-dynamic
 PROGRAM=prog
+BUILDDIR=build
 all=$(PROGRAM)
 
 SRCDIR=.
-OBJDIR=.
 
 SOURCES := $(wildcard $(SRCDIR)/*.c)
-OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(BUILDDIR)/%.o)
 INCLUDES := $(wildcard $(SRCDIR)/*.h)
 
 
-$(PROGRAM): $(OBJECTS)
-	$(CC) $(CFLAGS) -o $(PROGRAM) $(OBJECTS) 
+$(BUILDDIR)/$(PROGRAM): $(OBJECTS)
+	$(CC) $(CFLAGS)  $^ -o $@ $(LIBS)
 	@echo "linking complete"
 
-$(OBJECTS): $(SOURCES) $(INCLUDES)
-	$(CC) -c $(SOURCES) $(CFLAGS)
-	@echo "compiled successfully"$(OBJECTS)
+$(BUILDDIR)/%.o: %.c $(INCLUDES)
+	$(CC) $(CFLAGS) -c $<  -o $@
 
 clean:
-	rm $(OBJECTS) $(PROGRAM)
+	rm -f $(OBJECTS) *.o $(BUILDDIR)/$(PROGRAM)
 	@echo "Cleanup complete"

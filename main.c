@@ -8,10 +8,9 @@
 #include "int.h"
 
 
-Data* T = &(Data) {.type=symbol,.symbol="T"};
-Data* nil = &(Data) {.type=symbol,.symbol="NIL"};
-Data* clean_list=NULL;
-Data* Abort = &(Data) {.type=symbol,.symbol="ABORT"};
+Data* T = &(Data) {.type=SYMBOL,.symbol="T"};
+Data* nil = &(Data) {.type=SYMBOL,.symbol="NIL"};
+Data* Abort = &(Data) {.type=SYMBOL,.symbol="ABORT"};
 
 err_t ERROR_OPCODES[] = {
     {ERR_DIV,"Division by 0"},

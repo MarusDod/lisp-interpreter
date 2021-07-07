@@ -11,7 +11,7 @@
 Data* handle_symbol(Data* var_list,Data* s){
 
     fflush(stdout);
-    if(s->type!=symbol) throw_error(ERR_NOT_FOUND,"type: %d",s->type);
+    if(s->type!=SYMBOL) throw_error(ERR_NOT_FOUND,"type: %d",s->type);
     char* string = s->symbol;
 
     Data* e = search_symbol(var_list,string);
@@ -25,7 +25,7 @@ Data* search_symbol_lexically(Data* var_list,char* string){
 
     Data* e=NULL;
 
-    if(var_list->elt->type==node){
+    if(var_list->elt->type==NODE){
             e=search_symbol(var_list->elt,string);
             return e;
     }
@@ -44,7 +44,7 @@ Data* search_symbol(Data* var_list,char* string){
     Data* e=NULL;
 
     while(var_list!=nil && var_list){
-        if(var_list->elt->type==node){
+        if(var_list->elt->type==NODE){
             if((e=search_symbol(var_list->elt,string))!=NULL)    return e; 
         }
         else if(strcasecmp(var_list->elt->name,string)==0){
@@ -60,16 +60,16 @@ Data* try_eval(Data* data,Data* env){
 
 
     switch(data->type){
-        case symbol:
+        case SYMBOL:
             if((e=search_symbol_lexically(env,data->symbol))) return e;
             else return data;
-        case node:
+        case NODE:
             while(data && data!= nil){
                 data->elt=try_eval(data->elt,env);
                 data=data->next;
             }
             return b;
-        case array:
+        case ARRAY:
             for(unsigned int i = 0;i < data->size;i++){
                 data->array[i] = try_eval(data->array[i],env);
             }
@@ -91,7 +91,7 @@ Data* eval_lambda(Data* data,Data* list,Data* env){
         list=list->next;
     }
 
-    env = env->elt->type==node ? env->next->elt:env;
+    env = env->elt->type==NODE ? env->next->elt:env;
 
     insert_node(&var_list,local);
     insert_node(&var_list,env);
@@ -103,7 +103,7 @@ Data* eval_lambda(Data* data,Data* list,Data* env){
 
 Data* eval_args(Data* list,Data* var_list){
     if(list==nil) return list;
-    assure(list->type==node,ERR_TYPE);
+    assure(list->type==NODE,ERR_TYPE);
 
     Data* acons = nil;
     while(list && list!=nil){
@@ -120,28 +120,31 @@ Data* eval(Data* list,Data* var_list){
 
     switch(list->type){
     
-    case number:    return copy(list,var_list);
-    case symbol:    return handle_symbol(var_list,list);
-    case string:    
-    case lambda:
-    case primitive:    
-    case macro:
+    case NUMBER:    return copy(list,var_list);
+    case SYMBOL:    return handle_symbol(var_list,list);
+    case STRING:    
+    case BLOB:    
+    case LAMBDA:
+    case PRIMITIVE:    
+    case MACRO:
                     return list;
-    case node:;
+    case NODE:;
         Data* e=handle_symbol(var_list,list->elt);
 
-        if(e==nil || (e->type!=primitive && e->type!=lambda && e->type!=macro)) return nil;
+        if(e==nil || (e->type!=PRIMITIVE && e->type!=LAMBDA && e->type!=MACRO)) return nil;
 
-        if (e->type==macro) return e->mac(list->next,var_list);
-        if(e->type==primitive) return e->fn(eval_args(list->next,var_list),var_list);
-        if(e->type==lambda) return eval_lambda(e->elt,eval_args(list->next,var_list),var_list);
+        if (e->type==MACRO) return e->mac(list->next,var_list);
+        if(e->type==PRIMITIVE) return e->fn(eval_args(list->next,var_list),var_list);
+        if(e->type==LAMBDA) return eval_lambda(e->elt,eval_args(list->next,var_list),var_list);
         break;
-    case array:;
+    case ARRAY:;
                 for(unsigned int i=0;i<list->size;i++){
                     list->array[i] = eval(list->array[i],var_list);
                 }
                return list;
-    default:break;
+    default:
+        fprintf(stderr,"eval nao implementado");
+        break;
     }
     return nil;                   
 }
@@ -169,7 +172,7 @@ void load_file(char* name,Data* env){
 }
 
 Data* progn(Data* args,Data* env){
-    assure(args->type==node,ERR_TYPE);
+    assure(args->type==NODE,ERR_TYPE);
 
     Data* e = eval_args(args,env);
     
