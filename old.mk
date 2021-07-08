@@ -1,9 +1,17 @@
 CC=gcc
-CFLAGS=-Wall -g -O0 
+RELEASE=-O2
+DEBUG=-g -O0
+CFLAGS=-Wall 
 LIBS=-ldl -lreadline -export-dynamic
 PROGRAM=prog
 BUILDDIR=build
 all=$(PROGRAM)
+
+debug:CFLAGS += $(DEBUG)
+debug:all
+
+release:CFLAGS += $(RELEASE)
+release:all
 
 SRCDIR=.
 
@@ -22,3 +30,6 @@ $(BUILDDIR)/%.o: %.c $(INCLUDES)
 clean:
 	rm -f $(OBJECTS) *.o $(BUILDDIR)/$(PROGRAM)
 	@echo "Cleanup complete"
+
+install:
+	cp 

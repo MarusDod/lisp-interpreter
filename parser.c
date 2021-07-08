@@ -94,16 +94,16 @@ Data* parse_string_literal(char** input){
 
     char* end_ptr = *input;
 
-    while(*end_ptr){
+    while(*end_ptr && end_ptr){
         if(*end_ptr == '\"'){
             break;
         }
 
         if(*end_ptr == '\\'){
-            (*end_ptr)++;
+            end_ptr++;
         }
 
-        (*end_ptr)++;
+        end_ptr++;
     }
 
     String str = string_from_till(*input,end_ptr);

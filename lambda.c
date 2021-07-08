@@ -165,10 +165,12 @@ void load_file(char* name,Data* env){
     fread(buf,1,st.st_size,fptr);
     fclose(fptr);
 
-    printf("Loaded %s successfully\n",name);
+    while(*buf && *buf != EOF){
+        Data* list = parse_input(&buf);
+        eval(list,env);
 
-    Data* list = parse_input(&buf);
-    eval_args(list,env);
+        skip_empty(&buf);
+    }
 }
 
 Data* progn(Data* args,Data* env){

@@ -114,9 +114,9 @@ Data* wrap(Data* l);
 //parser.c
 
 Data* parse_input(char**);
+void skip_empty(char** text);
 void list_to_string(Data*);
 int ext(char*);
-int get_next_paren(char**);
 Data* track_list(Data* list);
 
 //lambda.c
