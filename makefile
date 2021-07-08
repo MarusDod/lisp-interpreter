@@ -1,5 +1,5 @@
 CC=gcc
-cflags=-Wall -g -I 
+CFLAGS=-Wall -g -O0 
 LIBS=-ldl -lreadline -export-dynamic
 PROGRAM=prog
 BUILDDIR=build

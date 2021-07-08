@@ -25,6 +25,7 @@ Data* insert_node(Data** list,Data* elt){
         *list = new_data();
         (*list)->type=NODE;
         (*list)->elt=elt;
+        (*list)->next=nil;
         return *list;
     }
 
@@ -121,6 +122,14 @@ Data* make_symbol(char* str){
     Data* e=new_data();
     e->type=SYMBOL;
     e->symbol = strdup(str);
+    return e;
+}
+
+Data* make_quote(Data* data){
+    Data* e = new_data();
+    e->type = QUOTE;
+    e->quote = data;
+
     return e;
 }
 

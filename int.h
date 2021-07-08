@@ -17,6 +17,7 @@ typedef enum{
     NODE,
     STRING,
     SYMBOL,
+    QUOTE,
     VAR,
     PRIMITIVE,
     LAMBDA,
@@ -59,6 +60,8 @@ struct _data{
             struct _data* next;
         };
 
+        Data* quote;
+
         int value;
         char* str;
         char* symbol;
@@ -92,6 +95,7 @@ Data* insert_node(Data**,Data*);
 Data* make_number(int);
 Data* make_blob(void* stuff);
 Data* make_symbol(char*);
+Data* make_quote(Data* data);
 Data* make_primitive(Primitive);
 Data* make_macro(Macro);
 Data* make_array(Data* lst);

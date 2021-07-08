@@ -116,7 +116,7 @@ Data* eval_args(Data* list,Data* var_list){
 
 Data* eval(Data* list,Data* var_list){
 
-    if(list==T || list==nil) return list;
+    if(list==T || list==nil || list == Abort) return list;
 
     switch(list->type){
     

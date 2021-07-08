@@ -1,12 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <strings.h>
 #include <assert.h>
 #include <unistd.h>
+
 #include <dlfcn.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 #include "int.h"
+#include "betterstring.h"
 
 int isnumber(Data* node){
     return node->type==NUMBER;
@@ -25,6 +30,12 @@ Data* type_of(Data* data,Data* env){
             break;
         case NUMBER:
             str = "NUMBER";
+            break;
+        case QUOTE:
+            str = "QUOTE";
+            break;
+        case LAMBDA:
+            str = "LAMBDA";
             break;
         case BLOB:
             str = "BLOB";
@@ -276,16 +287,33 @@ Data* quote(Data* list,Data* var_list __attribute__ ((unused))){
     return car(list);
 }
 
-Data* readline(Data* args __attribute__((unused)),Data* env){
+Data* read_line(Data* args __attribute__((unused)),Data* env){
     char *str=NULL,*aux=NULL;
+    Data* list = NULL;
 
-    if(scanf(" %m[a-zA-Z0-9 \'\"#()^_+-*/%.\\]s",&str)!=1)
-        throw_error(ERR_PARSING,"");
+    while(1){
+        str = readline("User>");
+
+
+       String string = string_upgrade(str);
+
+        string_trim(&string);
+
+        if(string_isempty(string)){
+            string_destroy(string);
+            continue;
+        }
+
+        add_history(string.data);
     
-    aux=str;
-    Data* list=parse_input(&str);
-    free(aux);
-    return eval(list->elt,env);
+        aux=string.data;
+        list=parse_input(&aux);
+        string_destroy(string);
+
+        break;
+    }
+
+    return eval(list,env);
 }
 
 Data* loop(Data* args,Data* env){
@@ -345,7 +373,6 @@ Data* dll_load(Data* args,Data* env){
     char* foo_name = args->elt->str;
 
     void* foo = dlsym(handle,foo_name);
-    exit(0);
 
 
     return foo ?  make_blob(foo) : nil;
@@ -397,7 +424,7 @@ Data* load_symbols(){
     insert_node(&list,make_variable("print",make_primitive(print)));
 //these are just primitive functions whose arguments dont get evaluated, not actually macros
     insert_node(&list,make_variable("quote",make_macro(quote)));
-    insert_node(&list,make_variable("readline",make_macro(readline)));
+    insert_node(&list,make_variable("readline",make_macro(read_line)));
     insert_node(&list,make_variable("setf",make_macro(setf)));
     insert_node(&list,make_variable("defun",make_macro(defun)));
     insert_node(&list,make_variable("lambda",make_macro(lambda_)));

@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <assert.h>
 #include <signal.h>
 #include "int.h"
 
@@ -32,9 +33,9 @@ int main(int argc,char* argv[]){
     Data* env = load_symbols();
 
     if(argc<2){ 
-        char* a = "(loop (print \"User>\") (print (readline)))";
+        char* a = "(loop (print (readline)))";
         Data* e = parse_input(&a);
-        eval(e->elt,env);
+        eval(e,env);
     }
 
     else{

@@ -17,7 +17,7 @@ void throw_error(ERROR e,const char* fmt,...){
             break;
         }
     }
-    fprintf(stderr,"ERROR: %s ",q.message);
+    fprintf(stderr,"ERROR: %s\n",q.message);
     vfprintf(stderr,fmt,list);
 
     va_end(list);

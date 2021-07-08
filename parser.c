@@ -1,18 +1,220 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <strings.h>
 #include <stdarg.h>
 #include <assert.h>
-#include "int.h"
 #include <ctype.h>
 
+#include "betterstring.h"
+#include "int.h"
+
+typedef Data* (*Parser)(char**);
+
+Data* parse_string_literal(char** input);
+Data* parse_symbol(char** input);
+Data* parse_quote(char** input);
+Data* parse_array(char** input);
+Data* parse_number(char** input);
+Data* parse_list(char** input);
+Data* parse_input(char** input);
+
+static const Parser parsers[] = {
+    parse_number,
+    parse_list,
+    parse_symbol,
+    parse_quote,
+    parse_array,
+    parse_string_literal,
+};
+
+
 void skip_comment(char** text){
+    if(**text != ';') return;
+
     (*text)++;
     while(**text!='\n' && **text && **text!=EOF) (*text)++;
     if(**text=='\n') (*text)++;
 }
 
+void skip_empty(char** text){
+    while(**text){
+        switch(**text){
+            case '\n':
+            case '\t':
+            case ' ':
+            (*text)++;
+            default:break;
+        }
+
+        if(**text == ';'){
+            (*text)++;
+            while(**text!='\n' && **text && **text!=EOF) (*text)++;
+            if(**text=='\n') (*text)++;
+        }
+        else break;
+
+    }
+}
+
+Data* parse_input(char** input){
+    Data* data = NULL;
+
+    skip_empty(input);
+
+    for (size_t i = 0; i < sizeof(parsers) / sizeof(Parser); i++)
+    {
+        if((data = parsers[i](input))){
+            return data;
+        }
+    }
+    
+    return NULL;
+}
+
+
+Data* parse_number(char** input){
+    int a,n;
+
+    if(sscanf(*input,"%i%n",&a,&n)==1){
+        (*input)+=n;
+        return make_number(a);
+    }
+
+    return NULL;
+}
+
+Data* parse_string_literal(char** input){
+    if(**input != '\"'){
+        return NULL;
+    }
+
+    (*input)++;
+
+    char* end_ptr = *input;
+
+    while(*end_ptr){
+        if(*end_ptr == '\"'){
+            break;
+        }
+
+        if(*end_ptr == '\\'){
+            (*end_ptr)++;
+        }
+
+        (*end_ptr)++;
+    }
+
+    String str = string_from_till(*input,end_ptr);
+
+    String ret = string_escape(str);
+
+    string_destroy(str);
+    (*input) = end_ptr + 1;
+
+    return make_string(ret.data);
+}
+
+bool symbol_callback(char c){
+    static const char symbol_chars[] = {
+        '+',
+        '-',
+        '*',
+        '_',
+        '/',
+        ':',
+        '<',
+        '>',
+        '.',
+    };
+
+    for (size_t i = 0; i < sizeof(symbol_chars)/sizeof(char); i++)
+    {
+        if(c == symbol_chars[i]){
+            return true;
+        }
+    }
+    
+    return (c >= 'a'&& c <= 'z') || (c >= 'A'&& c <= 'Z');
+};
+
+Data* parse_symbol(char** input){
+
+    String str = string_from_while(*input,symbol_callback);
+
+    if(string_isempty(str)) return NULL;
+
+    (*input) += str.len;
+
+    return make_symbol(str.data);
+}
+
+Data* parse_quote(char** input){
+    if(**input != '\''){
+        return NULL;
+    }
+
+    (*input)++;
+
+    Data* e = NULL;
+
+    if((e = parse_list(input))){
+    }
+    else if((e = parse_symbol(input))){
+    }
+    else{
+        return nil;
+    }
+
+
+    return make_quote(e);
+}
+
+Data* parse_array(char** input){
+    if(**input != '#'){
+        return NULL;
+    }
+
+    (*input)++;
+
+    Data* e = parse_list(input);
+
+    if(!e){
+        return NULL;
+    }
+
+    return make_array(e);
+}
+
+Data* parse_list(char** input){
+    if(**input != '('){
+        return NULL;
+    }
+
+    (*input)++;
+
+    Data* list = nil,*data = NULL;
+
+    do{
+        data = parse_input(input);
+        if(data){
+            insert_node(&list,data);
+        }
+    }while(data);
+
+    skip_empty(input);
+
+    if(**input != ')'){
+        return NULL;
+    }
+
+    (*input)++;
+
+    return list;
+}
+
+/*
 Data* parse_input(char** input){
     Data* list=nil;
     Data* e=nil;
@@ -60,7 +262,7 @@ Data* parse_input(char** input){
                 (*input)++;
                 return list;
             }
-            else if(sscanf(*input," %[a-zA-Z+-*/%<>.]s ",ptr)==1){
+            else if(sscanf(*input," %[a-zA-Z+-*%/<>.]s ",ptr)==1){
                 if(strcasecmp("NIL",ptr)==0) insert_node(&list,nil);
                 else if(strcasecmp("T",ptr)==0) insert_node(&list,T);
                 else insert_node(&list,make_symbol(ptr));
@@ -71,6 +273,7 @@ Data* parse_input(char** input){
     }
     return list;
 }
+*/
 
 void list_to_string(Data* list){
 
