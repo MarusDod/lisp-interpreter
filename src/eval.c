@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "int.h"
+#include "lisp.h"
 
 Data* handle_symbol(Data* var_list,Data* s){
 

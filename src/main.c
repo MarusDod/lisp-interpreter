@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <signal.h>
-#include "int.h"
+#include "lisp.h"
 
 
 Data* T = &(Data) {.type=SYMBOL,.symbol="T"};

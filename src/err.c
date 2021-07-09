@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
-#include "int.h"
+#include "lisp.h"
 
 void throw_error(ERROR e,const char* fmt,...){
     va_list list;

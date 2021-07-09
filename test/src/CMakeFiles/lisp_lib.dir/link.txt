@@ -1,0 +1,2 @@
+/usr/bin/ar qc liblisp_lib.a CMakeFiles/lisp_lib.dir/data.c.o CMakeFiles/lisp_lib.dir/err.c.o CMakeFiles/lisp_lib.dir/eval.c.o CMakeFiles/lisp_lib.dir/func.c.o CMakeFiles/lisp_lib.dir/parser.c.o CMakeFiles/betterstring.dir/betterstring.c.o
+/usr/bin/ranlib liblisp_lib.a

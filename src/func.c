@@ -10,7 +10,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include "int.h"
+#include "lisp.h"
 #include "betterstring.h"
 
 int isnumber(Data* node){

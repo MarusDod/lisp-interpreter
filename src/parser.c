@@ -8,7 +8,7 @@
 #include <ctype.h>
 
 #include "betterstring.h"
-#include "int.h"
+#include "lisp.h"
 
 typedef Data* (*Parser)(char**);
 
