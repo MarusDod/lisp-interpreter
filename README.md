@@ -1,104 +1,126 @@
-# lisp-interpreter
+# Lisp Interpreter
 
 A lisp interpreter in C. Still work in progress.
 
 
 
-To build project: 
+### Build project: 
 
-make
+```bash
+    git clone https://github.com/MarusDod/lisp-interpreter
+    #cd into directory
+    mkdir build
+    cd build
+    cmake ..
+    make
+```
 
-Run source file:
+### Install:
 
-	./prog file.lisp
+```bash
+    sudo make install
+```
 
-Run repl:
+### Uninstall:
 
-	./prog
+```bash
+    sudo xargs rm < install_manifest.txt
+```
 
-To safely exit the repl:
+
+
+### Run source file:
+
+```
+    lisp file.lisp
+```
+
+### Run repl:
+
+```
+    lisp
+```
+
+### Safely exit the repl:
     
+```
     abort
+```
+
+### Parser:
+
+    -Supports quotes, symbols, strings, integers, list and arryas
+    -Single line comments with semi-colon.
 
 
+### Eval:
 
-Parser:
+    -Pretty much same syntax as common lisp
+    -No need for funcall
 
-	-Only supports single line comments with semi-colon.
+
+### Memory management:
+
+    -None (as of yet)
+
+### Features:
+    - Vectors
+    - Higher order functions
+    - Closures
+    - Lists
+    - Strings
+    - Positive integers
+    - C FFI
+
+### Examples:
+
+```lisp
+      (cons 1 '(2 3)) ; (1 2 3)
   
-	-Don't chain multiple symbols together. Ex: don't (+1 2).
-
-
-
-Eval:
-
-	-Supports pretty much same syntax as common lisp
-
-    -Support recursion
-   
-    -Quoted symbols and lists will not be evaluated
-
-
-Garbage Collection:
-
-	-I didn't include manual memory management, instead it only deallocates at the end (can be quite the memory hog).
+      (setf b (+ 2 3)) ; b
   
-	-Again this is still a work in progress, please do not ever use this in your main projects.
-
-Built-in primitive functions: +,-,/,%,cons,car,cdr,eq,numberp,null,quote,eval,defun,setf,length,print,if,<,>,and,or,progn,aref,array-dimensions,lambda,make-array,list,sleep
-
-Supports:
-    -Vectors
-    -Lambdas / anonymous functions
-    -Closures
-    -Higher order functions
-    -Lists
-    -Strings
-    -Positive integers
-
-Examples:
+      (* 3 (+ 6 b)) ; 33
+```
 
 
-  	(cons 1 '(2 3)) -> (1 2 3)
+```lisp
+    (defun double (x) (* x 2)) ; double
   
-  	(setf b (+ 2 3)) -> b
-  
-  	(* 3 (+ 6 b)) -> 33
+    (double b) ; 10
+```
 
 
-	(defun double (x) (* x 2)) -> double
-  
-	(double b) -> 10
+```lisp
+    (if (numberp b) 5 10) ; 5
+    (length '((1 2 3) w (3 f))) ; 3
 
-
-	(if (numberp b) 5 10) -> 5
-
-	(length '((1 2 3) w (3 f))) -> 3
-
- 	(print "haha") -> "haha" "haha"
-  
- 	(null nil) -> T
-	
-	(defun factorial (x) (if (< x 2) 1 (* x (factorial (- x 1))))
-  
-  	(print (factorial 10)) -> 3628800
-
+     (print "haha") ; "haha" "haha"
+     (null nil) ; T
+    (defun factorial (x) (if (< x 2) 1 (* x (factorial (- x 1))))
+      (print (factorial 10)) ; 3628800
 
     (defun make-adder (x) (lambda (y) (+ x y)))
 
     (setf adder (make-adder 5))
 
-    (print (adder 10)) -> 15
- 
-Features to implement:
-  
-	-Macros
-  
-    -Optional Arguments
+    (print (adder 10)) ; 15
+```
 
-	-String manipulation
+```lisp
+    (setf handle (dll-open "./libtest.so"))
+
+    (setf foo (dll-load handle "foo"))
+    (defun b (x y) (dll-apply foo x y))
+    (print (b 1 2))
+
+    (dll-close handle)
+```
+ 
+## Features to implement:
   
-	-Garbage collection
-  
-	-Pretty much everything else
+    - Macros
+    - Optional Arguments
+    - String manipulation
+    - Garbage collection
+    - Just in Time Compilation
 
